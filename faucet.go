@@ -63,6 +63,7 @@ func main() {
 	recaptcha.Init(recaptchaSecretKey)
 
 	r.HandleFunc("/claim", getCoinsHandler)
+	r.HandleFunc("/claim/wallet", getWalletCoinsHandler)
 
 	log.Fatal(http.ListenAndServe(publicUrl, handlers.CORS(handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization", "Token"}), handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS", "DELETE"}), handlers.AllowedOrigins([]string{"*"}))(r)))
 
@@ -139,5 +140,34 @@ func getCoinsHandler(w http.ResponseWriter, request *http.Request) {
 		fmt.Println(time.Now().UTC().Format(time.RFC3339), encodedAddress, "[1]")
 		go executeCmd(sendFaucet, "y", pass)
 	}
+	return
+}
+
+func getWalletCoinsHandler(w http.ResponseWriter, request *http.Request) {
+	var claim claim_struct
+
+	// decode JSON response from front end
+	decoder := json.NewDecoder(request.Body)
+	decoderErr := decoder.Decode(&claim)
+	if decoderErr != nil {
+		panic(decoderErr)
+	}
+
+	// make sure address is bech32
+	readableAddress, decodedAddress, decodeErr := bech32.DecodeAndConvert(claim.Address)
+	if decodeErr != nil {
+		panic(decodeErr)
+	}
+	// re-encode the address in bech32
+	encodedAddress, encodeErr := bech32.ConvertAndEncode(readableAddress, decodedAddress)
+	if encodeErr != nil {
+		panic(encodeErr)
+	}
+
+	sendFaucet := fmt.Sprintf("colorcli tx send " + encodedAddress + " " + amountFaucet + " --from=" + key + " --chain-id=" + chain + " --fees=2uclr --home /home/ubuntu/goApps/src/github.com/RNSSolution/color-sdk/build/node2/colorcli")
+	fmt.Println(sendFaucet)
+	fmt.Println(time.Now().UTC().Format(time.RFC3339), encodedAddress, "[1]")
+	go executeCmd(sendFaucet, "y", pass)
+
 	return
 }
