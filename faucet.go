@@ -29,6 +29,7 @@ var pass string
 var node string
 var publicUrl string
 var faucetHome string
+var fees string
 
 type claim_struct struct {
 	Address  string
@@ -60,6 +61,7 @@ func main() {
 	node = getEnv("FAUCET_NODE")
 	publicUrl = getEnv("FAUCET_PUBLIC_URL")
 	faucetHome = getEnv("FAUCET_HOME")
+	fees = getEnv("FAUCET_FEES")
 
 	r := mux.NewRouter()
 	recaptcha.Init(recaptchaSecretKey)
@@ -137,8 +139,9 @@ func getCoinsHandler(w http.ResponseWriter, request *http.Request) {
 
 		fmt.Println(encodedAddress)
 
-		sendFaucet := fmt.Sprintf("colorcli tx send " + encodedAddress + " " + amountFaucet + " --from=" + key + " --chain-id=" + chain + " --fees=2uclr --home " + faucetHome)
-		fmt.Println(sendFaucet)
+		sendFaucet := fmt.Sprintf("colorcli tx send %s %s --from %s --chain-id %s --fees %s --home %s --node %s",
+			encodedAddress, amountFaucet, key, chain, fees, faucetHome, node)
+		fmt.Println("Command: ", sendFaucet)
 		fmt.Println(time.Now().UTC().Format(time.RFC3339), encodedAddress, "[1]")
 		go executeCmd(sendFaucet, "y", pass)
 	}
@@ -166,8 +169,9 @@ func getWalletCoinsHandler(w http.ResponseWriter, request *http.Request) {
 		panic(encodeErr)
 	}
 
-	sendFaucet := fmt.Sprintf("colorcli tx send " + encodedAddress + " " + amountFaucet + " --from=" + key + " --chain-id=" + chain + " --fees=2uclr --home " + faucetHome)
-	fmt.Println(sendFaucet)
+	sendFaucet := fmt.Sprintf("colorcli tx send %s %s --from %s --chain-id %s --fees %s --home %s --node %s",
+		 encodedAddress, amountFaucet, key, chain, fees, faucetHome, node)
+	fmt.Println("Command: ", sendFaucet)
 	fmt.Println(time.Now().UTC().Format(time.RFC3339), encodedAddress, "[1]")
 	go executeCmd(sendFaucet, "y", pass)
 
