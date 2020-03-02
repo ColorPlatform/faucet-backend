@@ -138,15 +138,19 @@ func getCoinsHandler(w http.ResponseWriter, request *http.Request) {
 	if captchaPassed {
 
 		fmt.Println(encodedAddress)
-
-		sendFaucet := fmt.Sprintf("colorcli tx send %s %s --from %s --chain-id %s --fees %s --home %s --node %s",
-			encodedAddress, amountFaucet, key, chain, fees, faucetHome, node)
+		txCount += 1
+		sendFaucet := fmt.Sprintf("colorcli tx send %s %s --memo %d --from %s --chain-id %s --fees %s --home %s --node %s",
+			encodedAddress, amountFaucet, txCount, key, chain, fees, faucetHome, node)
 		fmt.Println("Command: ", sendFaucet)
 		fmt.Println(time.Now().UTC().Format(time.RFC3339), encodedAddress, "[1]")
 		go executeCmd(sendFaucet, "y", pass)
 	}
 	return
 }
+
+var (
+	txCount = 0
+)
 
 func getWalletCoinsHandler(w http.ResponseWriter, request *http.Request) {
 	var claim claim_struct
@@ -169,8 +173,9 @@ func getWalletCoinsHandler(w http.ResponseWriter, request *http.Request) {
 		panic(encodeErr)
 	}
 
-	sendFaucet := fmt.Sprintf("colorcli tx send %s %s --from %s --chain-id %s --fees %s --home %s --node %s",
-		 encodedAddress, amountFaucet, key, chain, fees, faucetHome, node)
+	txCount += 1
+	sendFaucet := fmt.Sprintf("colorcli tx send %s %s --memo %d --from %s --chain-id %s --fees %s --home %s --node %s",
+		 encodedAddress, amountFaucet, txCount, key, chain, fees, faucetHome, node)
 	fmt.Println("Command: ", sendFaucet)
 	fmt.Println(time.Now().UTC().Format(time.RFC3339), encodedAddress, "[1]")
 	go executeCmd(sendFaucet, "y", pass)
