@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -74,21 +73,17 @@ func main() {
 }
 
 func executeCmd(command string, writes ...string) {
-	cmd, wc, _ := goExecute(command)
+	cmd := getCmd(command)
 
-	for _, write := range writes {
-		wc.Write([]byte(write + "\n"))
-	}
-	cmd.Wait()
-}
-
-func goExecute(command string) (cmd *exec.Cmd, pipeIn io.WriteCloser, pipeOut io.ReadCloser) {
-	cmd = getCmd(command)
-	pipeIn, _ = cmd.StdinPipe()
-	pipeOut, _ = cmd.StdoutPipe()
-	go cmd.Start()
-	time.Sleep(time.Second)
-	return cmd, pipeIn, pipeOut
+	stdin, _ := cmd.StdinPipe()
+	go func() {
+		defer stdin.Close()
+		for _, write := range writes {
+			stdin.Write([]byte(write + "\n"))
+		}
+	}()
+	output, _ := cmd.CombinedOutput()
+	fmt.Println(string(output))
 }
 
 func getCmd(command string) *exec.Cmd {
